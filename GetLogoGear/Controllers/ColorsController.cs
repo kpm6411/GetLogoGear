@@ -46,15 +46,21 @@ namespace GetLogoGear.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "ColorID,Name")] Color color)
+        public ActionResult Create([Bind(Include = "Name")] Color color)
         {
-            if (ModelState.IsValid)
+            try
             {
-                db.Colors.Add(color);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                if (ModelState.IsValid)
+                {
+                    db.Colors.Add(color);
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
-
+            catch (DataException)
+            {
+                ModelState.AddModelError("", "Unable to save chagnes. Try again, and if the problem persists see your system administrator.");
+            }
             return View(color);
         }
 
@@ -76,25 +82,41 @@ namespace GetLogoGear.Controllers
         // POST: Colors/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "ColorID,Name")] Color color)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Entry(color).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-            return View(color);
-        }
-
-        // GET: Colors/Delete/5
-        public ActionResult Delete(int? id)
+        public ActionResult EditPost(int? id)
         {
             if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            var colorToUpdate = db.Colors.Find(id);
+            if (TryUpdateModel(colorToUpdate, "", new string[] { "Name" }))
+            {
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (DataException)
+                {
+                    ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
+                }
+            }
+
+            return View(colorToUpdate);
+        }
+
+        // GET: Colors/Delete/5
+        public ActionResult Delete(int? id, bool? saveChangesError=false)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewBag.ErrorMessage = "Delete failed. Try again, and if the problem persists see your system administrator.";
             }
             Color color = db.Colors.Find(id);
             if (color == null)
@@ -105,13 +127,20 @@ namespace GetLogoGear.Controllers
         }
 
         // POST: Colors/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        public ActionResult Delete(int id)
         {
-            Color color = db.Colors.Find(id);
-            db.Colors.Remove(color);
-            db.SaveChanges();
+            try
+            {
+                Color color = db.Colors.Find(id);
+                db.Colors.Remove(color);
+                db.SaveChanges();
+            }
+            catch (DataException)
+            {
+                return RedirectToAction("Delete", new { id = id, saveChangesError = true });
+            }
             return RedirectToAction("Index");
         }
 

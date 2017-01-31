@@ -18,13 +18,16 @@
             @Html.DisplayNameFor(model => model.Description)
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.Sizes)
+            @Html.DisplayNameFor(model => model.HasSizes)
         </th>
         <th>
             @Html.DisplayNameFor(model => model.Price)
         </th>
         <th>
             @Html.DisplayNameFor(model => model.Image)
+        </th>
+        <th>
+            @Html.DisplayNameFor(Model => Model.Colors)
         </th>
         <th></th>
     </tr>
@@ -41,7 +44,7 @@
             @Html.DisplayFor(modelItem => item.Description)
         </td>
         <td>
-            @Html.DisplayFor(modelItem => item.Sizes)
+            @Html.DisplayFor(modelItem => item.HasSizes)
         </td>
         <td>
             @Html.DisplayFor(modelItem => item.Price)
@@ -49,7 +52,15 @@
         <td>
             @if (item.Image != null)
             {
-                <img src=@item.Image height="80"/>
+                <img src=@item.Image height="50"/>
+            }
+        </td>
+        <td>
+            @{
+                foreach (var color in item.Colors)
+                {
+                    @color.Name <br/>
+                }
             }
         </td>
         <td>

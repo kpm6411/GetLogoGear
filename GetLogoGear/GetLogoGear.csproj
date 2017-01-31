@@ -207,6 +207,14 @@
     <Compile Include="Migrations\201701081930299_ImagePath.Designer.cs">
       <DependentUpon>201701081930299_ImagePath.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201701311443581_UpdateColorModel.cs" />
+    <Compile Include="Migrations\201701311443581_UpdateColorModel.Designer.cs">
+      <DependentUpon>201701311443581_UpdateColorModel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201701311458528_UpdateBaseItemModel.cs" />
+    <Compile Include="Migrations\201701311458528_UpdateBaseItemModel.Designer.cs">
+      <DependentUpon>201701311458528_UpdateBaseItemModel.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\BaseItem.cs" />
@@ -218,6 +226,7 @@
     <Compile Include="Models\Storefront.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
+    <Compile Include="ViewModels\AssignedColorData.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.css" />
@@ -317,6 +326,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201701081930299_ImagePath.resx">
       <DependentUpon>201701081930299_ImagePath.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201701311443581_UpdateColorModel.resx">
+      <DependentUpon>201701311443581_UpdateColorModel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201701311458528_UpdateBaseItemModel.resx">
+      <DependentUpon>201701311458528_UpdateBaseItemModel.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
 
-namespace GetLogoGear.Models
+namespace GetLogoGear.ViewModels
 {
-    public class Color
+    public class AssignedColorData
     {
         public int ColorID { get; set; }
-
-        [Required]
-        [StringLength(50)]
         public string Name { get; set; }
+        public bool Assigned { get; set; }
     }
 }

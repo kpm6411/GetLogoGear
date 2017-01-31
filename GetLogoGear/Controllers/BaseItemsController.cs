@@ -8,6 +8,7 @@ using System.Web;
 using System.Web.Mvc;
 using GetLogoGear.Models;
 using System.IO;
+using GetLogoGear.ViewModels;
 
 namespace GetLogoGear.Controllers
 {
@@ -39,7 +40,9 @@ namespace GetLogoGear.Controllers
         // GET: BaseItems/Create
         public ActionResult Create()
         {
-            
+            var baseItem = new BaseItem();
+            baseItem.Colors = new List<Color>();
+            PopulateColorData(baseItem);
             return View();
         }
 
@@ -49,32 +52,40 @@ namespace GetLogoGear.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(/*[Bind(Include = "ItemID,Name,Description,Sizes,Price,Image")]*/ BaseItem baseItem, HttpPostedFileBase upload)
+        public ActionResult Create([Bind(Include = "Name,Description,HasSizes,Price,Image, Colors")] BaseItem baseItem, string[] selectedColors, HttpPostedFileBase upload)
         {
-            if (ModelState.IsValid)
+            try
             {
-                /*if (upload != null && upload.ContentLength > 0)
+                if (selectedColors != null)
                 {
-                    using (var reader = new System.IO.BinaryReader(upload.InputStream))
+                    baseItem.Colors = new List<Color>();
+                    foreach (var color in selectedColors)
                     {
-                        baseItem.Image = reader.ReadBytes(upload.ContentLength);
+                        var colorToAdd = db.Colors.Find(int.Parse(color));
+                        baseItem.Colors.Add(colorToAdd);
                     }
-                }*/
-
-                if (upload != null)
-                {
-                    string pic = System.IO.Path.GetFileName(upload.FileName);
-                    //string pic = "baseitem" + baseItem.ItemID;
-                    string path = System.IO.Path.Combine(Server.MapPath("~/Images/BaseItems"), pic);
-                    upload.SaveAs(path);
-                    baseItem.Image = "Images/BaseItems/" + upload.FileName;
                 }
+                if (ModelState.IsValid)
+                {
+                    if (upload != null)
+                    {
+                        string pic = System.IO.Path.GetFileName(upload.FileName);
+                        //string pic = "baseitem" + baseItem.ItemID;
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Images/BaseItems"), pic);
+                        upload.SaveAs(path);
+                        baseItem.Image = "Images/BaseItems/" + upload.FileName;
+                    }
 
-                db.BaseItems.Add(baseItem);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                    db.BaseItems.Add(baseItem);
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
-
+            catch (DataException)
+            {
+                ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists see your system administrator.");
+            }
+            PopulateColorData(baseItem);
             return View(baseItem);
         }
 
@@ -107,6 +118,23 @@ namespace GetLogoGear.Controllers
                 return RedirectToAction("Index");
             }
             return View(baseItem);
+        }
+
+        private void PopulateColorData(BaseItem baseItem)
+        {
+            var allColors = db.Colors;
+            var itemColors = new HashSet<int>(baseItem.Colors.Select(c => c.ColorID));
+            var viewModel = new List<AssignedColorData>();
+            foreach (var color in allColors)
+            {
+                viewModel.Add(new AssignedColorData 
+                {
+                    ColorID = color.ColorID,
+                    Name = color.Name,
+                    Assigned = itemColors.Contains(color.ColorID)
+                });
+            }
+            ViewBag.Colors = viewModel;
         }
 
         // GET: BaseItems/Delete/5
