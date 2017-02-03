@@ -10,7 +10,7 @@
 @using (Html.BeginForm("Create", "BaseItems", FormMethod.Post, new { @class = "form-horizontal", role = "form", enctype = "multipart/form-data" }))
 {
     @Html.AntiForgeryToken()
-    
+        
     <div class="form-horizontal">
         <h4>BaseItem</h4>
         <hr />
@@ -85,7 +85,7 @@
 
         <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="Create" class="btn btn-default" />
+                <input type="submit" value="Create" class="btn btn-default" style="color:white" />
             </div>
         </div>
     </div>

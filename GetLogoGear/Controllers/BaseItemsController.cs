@@ -9,6 +9,7 @@ using System.Web.Mvc;
 using GetLogoGear.Models;
 using System.IO;
 using GetLogoGear.ViewModels;
+using System.Data.Entity.Infrastructure;
 
 namespace GetLogoGear.Controllers
 {
@@ -52,7 +53,7 @@ namespace GetLogoGear.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Name,Description,HasSizes,Price,Image, Colors")] BaseItem baseItem, string[] selectedColors, HttpPostedFileBase upload)
+        public ActionResult Create([Bind(Include = "ItemID,Name,Description,HasSizes,Price,Image, Colors")] BaseItem baseItem, string[] selectedColors, HttpPostedFileBase upload)
         {
             try
             {
@@ -69,11 +70,12 @@ namespace GetLogoGear.Controllers
                 {
                     if (upload != null)
                     {
+                        //string[] arr = System.IO.Path.GetFileName(upload.FileName).Split('.');
+                        //string pic = baseItem.ItemID.ToString() + "." + arr[1];
                         string pic = System.IO.Path.GetFileName(upload.FileName);
-                        //string pic = "baseitem" + baseItem.ItemID;
                         string path = System.IO.Path.Combine(Server.MapPath("~/Images/BaseItems"), pic);
                         upload.SaveAs(path);
-                        baseItem.Image = "Images/BaseItems/" + upload.FileName;
+                        baseItem.Image = "Images/BaseItems/" + pic;
                     }
 
                     db.BaseItems.Add(baseItem);
@@ -96,26 +98,14 @@ namespace GetLogoGear.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            BaseItem baseItem = db.BaseItems.Find(id);
+            BaseItem baseItem = db.BaseItems
+                .Include(i => i.Colors)
+                .Where(i => i.ItemID == id)
+                .Single();
+            PopulateColorData(baseItem);
             if (baseItem == null)
             {
                 return HttpNotFound();
-            }
-            return View(baseItem);
-        }
-
-        // POST: BaseItems/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "ItemID,Name,Description,Sizes,Price,Image")] BaseItem baseItem)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Entry(baseItem).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
             }
             return View(baseItem);
         }
@@ -127,7 +117,7 @@ namespace GetLogoGear.Controllers
             var viewModel = new List<AssignedColorData>();
             foreach (var color in allColors)
             {
-                viewModel.Add(new AssignedColorData 
+                viewModel.Add(new AssignedColorData
                 {
                     ColorID = color.ColorID,
                     Name = color.Name,
@@ -135,6 +125,84 @@ namespace GetLogoGear.Controllers
                 });
             }
             ViewBag.Colors = viewModel;
+        }
+
+        // POST: BaseItems/Edit/5
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
+        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit(int? id, string[] selectedColors, HttpPostedFileBase upload)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            var baseItemToUpdate = db.BaseItems
+                .Include(i => i.Colors)
+                .Where(i => i.ItemID == id)
+                .Single();
+
+            if (TryUpdateModel(baseItemToUpdate, "",
+                new string[] { "Name", "Description", "HasSizes", "Price", "Colors" }))
+            {
+                try
+                {
+                    UpdateItemColors(selectedColors, baseItemToUpdate);
+                    if (upload != null)
+                    {
+                        string oldPath = System.IO.Path.Combine(Server.MapPath("~/"), baseItemToUpdate.Image);
+                        if (System.IO.File.Exists(oldPath))
+                        {
+                            System.IO.File.Delete(oldPath);
+                        }
+                        //string[] arr = System.IO.Path.GetFileName(upload.FileName).Split('.');
+                        //string pic = baseItem.ItemID.ToString() + "." + arr[1];
+                        string pic = System.IO.Path.GetFileName(upload.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Images/BaseItems"), pic);
+                        upload.SaveAs(path);
+                        baseItemToUpdate.Image = "Images/BaseItems/" + pic;
+                    }
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (RetryLimitExceededException)
+                {
+                    ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
+                }
+            }
+            PopulateColorData(baseItemToUpdate);
+            return View(baseItemToUpdate);
+        }
+
+        private void UpdateItemColors(string[] selectedColors, BaseItem baseItemToUpdate)
+        {
+            if (selectedColors == null)
+            {
+                baseItemToUpdate.Colors = new List<Color>();
+                return;
+            }
+
+            var selectedColorsHS = new HashSet<string>(selectedColors);
+            var baseItemColors = new HashSet<int>
+                (baseItemToUpdate.Colors.Select(c => c.ColorID));
+            foreach (var color in db.Colors)
+            {
+                if (selectedColorsHS.Contains(color.ColorID.ToString()))
+                {
+                    if (!baseItemColors.Contains(color.ColorID))
+                    {
+                        baseItemToUpdate.Colors.Add(color);
+                    }
+                }
+                else
+                {
+                    if (baseItemColors.Contains(color.ColorID))
+                    {
+                        baseItemToUpdate.Colors.Remove(color);
+                    }
+                }
+            }
         }
 
         // GET: BaseItems/Delete/5
@@ -157,7 +225,15 @@ namespace GetLogoGear.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            BaseItem baseItem = db.BaseItems.Find(id);
+            BaseItem baseItem = db.BaseItems
+                .Include(i => i.Colors)
+                .Where(d => d.ItemID == id)
+                .Single();
+            string imgPath = System.IO.Path.Combine(Server.MapPath("~/"), baseItem.Image);
+            if (System.IO.File.Exists(imgPath))
+            {
+                System.IO.File.Delete(imgPath);
+            }
             db.BaseItems.Remove(baseItem);
             db.SaveChanges();
             return RedirectToAction("Index");
