@@ -13,5 +13,7 @@ namespace GetLogoGear.Models
         [Required]
         [StringLength(50)]
         public string Name { get; set; }
+
+        public virtual ICollection<BaseItem> BaseItems { get; set; }
     }
 }

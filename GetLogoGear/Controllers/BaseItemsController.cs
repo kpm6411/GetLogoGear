@@ -144,7 +144,7 @@ namespace GetLogoGear.Controllers
                 .Single();
 
             if (TryUpdateModel(baseItemToUpdate, "",
-                new string[] { "Name", "Description", "HasSizes", "Price", "Colors" }))
+                new string[] { "Name", "Description", "HasSizes", "Price", "Colors", "Image" }))
             {
                 try
                 {

@@ -22,5 +22,22 @@ namespace GetLogoGear.Models
         public System.Data.Entity.DbSet<GetLogoGear.Models.Color> Colors { get; set; }
 
         public System.Data.Entity.DbSet<GetLogoGear.Models.BaseItem> BaseItems { get; set; }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<BaseItem>()
+                .HasMany(up => up.Colors)
+                .WithMany(color => color.BaseItems)
+                .Map(mc =>
+                {
+                    mc.ToTable("T_BaseItem_Color");
+                    mc.MapLeftKey("BaseItemID");
+                    mc.MapRightKey("ColorID");
+                }
+                
+            );
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }
