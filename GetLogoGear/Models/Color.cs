@@ -8,6 +8,7 @@ namespace GetLogoGear.Models
 {
     public class Color
     {
+        [Key]
         public int ColorID { get; set; }
 
         [Required]

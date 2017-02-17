@@ -31,8 +31,4 @@ namespace GetLogoGear.Models
         public virtual ICollection<Color> Colors { get; set; }
     }
 
-    public enum Sizes
-    {
-        XS = 1, S, M, L, XL, XXL
-    }
 }
